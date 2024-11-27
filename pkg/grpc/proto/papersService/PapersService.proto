@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package PapersService;
+
+option go_package = "./";
+
+service PapersManagement{
+    rpc GetAvailablePapers(Request) returns (AvailablePapers){};
+    rpc GetUserPapers(User) returns (AvailablePapers){};
+    rpc BuyPaper(Paper) returns (Status){};
+    rpc SellPaper(Paper) returns (Status){};
+}
+
+message User{
+    bytes id = 1;
+}
+
+message Request{}
+
+message Paper{
+    string name = 1;
+    int32 numberOfPapers = 2;
+}
+
+message AvailablePapers{
+    bytes papers = 1;
+}
+
+message Status{}

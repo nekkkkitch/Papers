@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package AuthService;
+
+option go_package = "./";
+
+service Authentification{
+    rpc GetPrivateKey(KeyRequest) returns (PrivateKey){};
+    rpc Register(User) returns (AuthData){};
+    rpc Login(User) returns (AuthData){};
+    rpc UpdateTokens(AuthData) returns (AuthData){};
+}
+
+message User{
+    string login = 1;
+    string password = 2;
+}
+
+message KeyRequest{}
+
+message PrivateKey{
+    bytes key = 1;
+}
+
+message AuthData{
+    string access_token = 1;
+    string refresh_token = 2;
+}
