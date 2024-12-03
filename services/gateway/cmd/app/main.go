@@ -1,10 +1,11 @@
 package main
 
 import (
+	"log"
 	"papers/pkg/jwt"
 	rtr "papers/services/gateway/internal/router"
 	aus "papers/services/gateway/internal/services/authService"
-	"log"
+	pps "papers/services/gateway/internal/services/ppsService"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
@@ -12,6 +13,7 @@ import (
 type Config struct {
 	JWTConfig *jwt.Config `yaml:"jwt" env-prefix:"JWT_"`
 	AUSConfig *aus.Config `yaml:"aus" env-prefix:"AUS_"`
+	PPSConfig *pps.Config `yaml:"pps"`
 	RTRConfig *rtr.Config `yaml:"rtr" env-prefix:"RTR_"`
 }
 
@@ -29,22 +31,21 @@ func main() {
 		log.Fatalln(err)
 	}
 	log.Println("Config file read successfully")
+	jwt, err := jwt.New(cfg.JWTConfig)
+	if err != nil {
+		log.Fatalln("Failed to create jwt: " + err.Error())
+	}
 	authService, err := aus.New(cfg.AUSConfig)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	log.Println("Auth service connected successfully")
-	log.Println("Message service connected successfully")
-	key, err := authService.GetPrivateKey()
+	ppsService, err := pps.New(cfg.PPSConfig)
 	if err != nil {
-		log.Fatalln("Problem with getting key: " + err.Error())
+		log.Fatalln(err)
 	}
-	jwt, err := jwt.NewWithKey(cfg.JWTConfig, key)
-	if err != nil {
-		log.Fatalln("Failed to create jwt: " + err.Error())
-	}
-	log.Println("Broker connected successfully")
-	router, err := rtr.New(cfg.RTRConfig, authService, &jwt)
+	log.Println("Auth service connected successfully")
+	router, err := rtr.New(cfg.RTRConfig, authService, ppsService, &jwt)
 	if err != nil {
 		log.Fatalln("Failed to host router:", err.Error())
 	}

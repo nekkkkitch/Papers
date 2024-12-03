@@ -23,6 +23,8 @@ const (
 	PapersManagement_GetUserPapers_FullMethodName      = "/PapersService.PapersManagement/GetUserPapers"
 	PapersManagement_BuyPaper_FullMethodName           = "/PapersService.PapersManagement/BuyPaper"
 	PapersManagement_SellPaper_FullMethodName          = "/PapersService.PapersManagement/SellPaper"
+	PapersManagement_Subscribe_FullMethodName          = "/PapersService.PapersManagement/Subscribe"
+	PapersManagement_Unsubscribe_FullMethodName        = "/PapersService.PapersManagement/Unsubscribe"
 )
 
 // PapersManagementClient is the client API for PapersManagement service.
@@ -33,6 +35,8 @@ type PapersManagementClient interface {
 	GetUserPapers(ctx context.Context, in *User, opts ...grpc.CallOption) (*AvailablePapers, error)
 	BuyPaper(ctx context.Context, in *Paper, opts ...grpc.CallOption) (*Status, error)
 	SellPaper(ctx context.Context, in *Paper, opts ...grpc.CallOption) (*Status, error)
+	Subscribe(ctx context.Context, in *Paper, opts ...grpc.CallOption) (grpc.ServerStreamingClient[Paper], error)
+	Unsubscribe(ctx context.Context, in *Paper, opts ...grpc.CallOption) (*Status, error)
 }
 
 type papersManagementClient struct {
@@ -83,6 +87,35 @@ func (c *papersManagementClient) SellPaper(ctx context.Context, in *Paper, opts 
 	return out, nil
 }
 
+func (c *papersManagementClient) Subscribe(ctx context.Context, in *Paper, opts ...grpc.CallOption) (grpc.ServerStreamingClient[Paper], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &PapersManagement_ServiceDesc.Streams[0], PapersManagement_Subscribe_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[Paper, Paper]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type PapersManagement_SubscribeClient = grpc.ServerStreamingClient[Paper]
+
+func (c *papersManagementClient) Unsubscribe(ctx context.Context, in *Paper, opts ...grpc.CallOption) (*Status, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Status)
+	err := c.cc.Invoke(ctx, PapersManagement_Unsubscribe_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PapersManagementServer is the server API for PapersManagement service.
 // All implementations must embed UnimplementedPapersManagementServer
 // for forward compatibility.
@@ -91,6 +124,8 @@ type PapersManagementServer interface {
 	GetUserPapers(context.Context, *User) (*AvailablePapers, error)
 	BuyPaper(context.Context, *Paper) (*Status, error)
 	SellPaper(context.Context, *Paper) (*Status, error)
+	Subscribe(*Paper, grpc.ServerStreamingServer[Paper]) error
+	Unsubscribe(context.Context, *Paper) (*Status, error)
 	mustEmbedUnimplementedPapersManagementServer()
 }
 
@@ -112,6 +147,12 @@ func (UnimplementedPapersManagementServer) BuyPaper(context.Context, *Paper) (*S
 }
 func (UnimplementedPapersManagementServer) SellPaper(context.Context, *Paper) (*Status, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SellPaper not implemented")
+}
+func (UnimplementedPapersManagementServer) Subscribe(*Paper, grpc.ServerStreamingServer[Paper]) error {
+	return status.Errorf(codes.Unimplemented, "method Subscribe not implemented")
+}
+func (UnimplementedPapersManagementServer) Unsubscribe(context.Context, *Paper) (*Status, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Unsubscribe not implemented")
 }
 func (UnimplementedPapersManagementServer) mustEmbedUnimplementedPapersManagementServer() {}
 func (UnimplementedPapersManagementServer) testEmbeddedByValue()                          {}
@@ -206,6 +247,35 @@ func _PapersManagement_SellPaper_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PapersManagement_Subscribe_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(Paper)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(PapersManagementServer).Subscribe(m, &grpc.GenericServerStream[Paper, Paper]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type PapersManagement_SubscribeServer = grpc.ServerStreamingServer[Paper]
+
+func _PapersManagement_Unsubscribe_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Paper)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PapersManagementServer).Unsubscribe(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PapersManagement_Unsubscribe_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PapersManagementServer).Unsubscribe(ctx, req.(*Paper))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PapersManagement_ServiceDesc is the grpc.ServiceDesc for PapersManagement service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -229,7 +299,17 @@ var PapersManagement_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "SellPaper",
 			Handler:    _PapersManagement_SellPaper_Handler,
 		},
+		{
+			MethodName: "Unsubscribe",
+			Handler:    _PapersManagement_Unsubscribe_Handler,
+		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "Subscribe",
+			Handler:       _PapersManagement_Subscribe_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "PapersService.proto",
 }

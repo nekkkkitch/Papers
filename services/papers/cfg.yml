@@ -1,0 +1,13 @@
+pps:
+  port: ":50053"
+rds:
+  host: "redis"
+  port: ":6379"
+  password: ""
+  dbnum: 0
+db:
+  host: "db"
+  port: 5432
+  user: "user"
+  password: "123"
+  dbname: "papersdb"

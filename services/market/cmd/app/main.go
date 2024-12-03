@@ -2,15 +2,16 @@ package main
 
 import (
 	"log"
-	pg "papers/services/balance/internal/db"
-	server "papers/services/balance/internal/server"
+	pg "papers/services/market/internal/db"
+	"papers/services/market/internal/redis"
+	"papers/services/market/internal/service"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
 type Config struct {
-	DBConfig            *pg.Config     `yaml:"db" env-prefix:"DB_"`
-	BalanceServerConfig *server.Config `yaml:"balance"`
+	DBConfig  *pg.Config    `yaml:"db" env-prefix:"DB_"`
+	RDSConfig *redis.Config `yaml:"rds"`
 }
 
 func readConfig(filename string) (*Config, error) {
@@ -33,12 +34,15 @@ func main() {
 		log.Fatalln(err)
 	}
 	log.Println("DB connected successfully")
-	server, err := server.New(cfg.BalanceServerConfig, db)
+	rds, err := redis.New(cfg.RDSConfig)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	if err := server.Server.Serve(*server.Listener); err != nil {
+	log.Println("Redis connected successfully")
+	svc, err := service.New(db, rds)
+	if err != nil {
 		log.Fatalln(err)
 	}
-	log.Println("Service connected successfully")
+	log.Println("Market started successfully")
+	svc.StartFun()
 }

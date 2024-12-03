@@ -10,8 +10,9 @@ type User struct {
 }
 
 type Paper struct {
-	Name           string `json:"name"`
-	NumberOfPapers int32  `json:"number_of_papers"`
+	Name   string  `json:"name"`
+	Price  float32 `json:"price"`
+	Amount int32   `json:"amount"`
 }
 
 // Данные для аутентификации

@@ -27,3 +27,14 @@ create table if not exists public.users(
     refresh_token text,
     balance real not null default 0
 );
+
+create table if not exists public.papers(
+    id serial not null primary key,
+    name text not null,
+    price real not null,
+    past_prices real[]
+);
+
+insert into public.papers(name, price) values('Dogecoin', '100');
+insert into public.papers(name, price) values('Amogus', '12.5');
+insert into public.papers(name, price) values('Ichor', '666666');

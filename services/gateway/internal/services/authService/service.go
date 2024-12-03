@@ -15,8 +15,8 @@ import (
 )
 
 type Config struct {
-	Host string `yaml:"auth_host" env-prefix:"AUTHHOST"`
-	Port string `yaml:"auth_port" env-prefix:"AUTHPORT"`
+	Host string `yaml:"host" env-prefix:"AUTHHOST"`
+	Port string `yaml:"port" env-prefix:"AUTHPORT"`
 }
 
 type Client struct {

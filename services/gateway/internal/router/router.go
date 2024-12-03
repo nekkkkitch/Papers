@@ -16,8 +16,9 @@ import (
 type Router struct {
 	App    *fiber.App
 	Config *Config
-	jwt    IJWTManager
+	pps    IPapersService
 	asvc   IAuthService
+	jwt    IJWTManager
 }
 
 type Config struct {
@@ -31,6 +32,10 @@ type IAuthService interface {
 	UpdateTokens(tokens models.AuthData) (*models.AuthData, error)
 }
 
+type IPapersService interface {
+	GetAvailablePapers() ([]byte, error)
+}
+
 type IJWTManager interface {
 	GetPublicKey() *rsa.PublicKey
 	GetIDFromToken(token string) (*uuid.UUID, error)
@@ -40,9 +45,9 @@ type IJWTManager interface {
 }
 
 // Создание рутов для запросов с применением middleware для проверки валидности токенов и началом получения сообщений из брокера
-func New(cfg *Config, auservice IAuthService, jwt IJWTManager) (*Router, error) {
+func New(cfg *Config, auservice IAuthService, pps IPapersService, jwt IJWTManager) (*Router, error) {
 	app := fiber.New()
-	router := Router{App: app, Config: cfg, jwt: jwt, asvc: auservice}
+	router := Router{App: app, Config: cfg, jwt: jwt, asvc: auservice, pps: pps}
 	router.App.Use("/ws", func(c *fiber.Ctx) error {
 		if websocket.IsWebSocketUpgrade(c) {
 			err := c.Next()
@@ -72,6 +77,7 @@ func New(cfg *Config, auservice IAuthService, jwt IJWTManager) (*Router, error) 
 	router.App.Post("/register", router.Register())
 	router.App.Get("/refresh", router.UpdateTokens())
 	router.App.Get("/ping", Ping)
+	router.App.Get("/papers", router.GetPapers())
 	return &router, nil
 }
 
@@ -79,10 +85,17 @@ func (r *Router) Listen() {
 	r.App.Listen(r.Config.Host + r.Config.Port)
 }
 
-// Пингуем сервер
-func Ping(c *fiber.Ctx) error {
-	log.Println("Ping")
-	return c.JSON("Ping")
+func (r *Router) GetPapers() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		bod, err := r.pps.GetAvailablePapers()
+		if err != nil {
+			log.Println("Failed to get available papers:", err)
+			c.Status(500)
+			return err
+		}
+		c.Write(bod)
+		return nil
+	}
 }
 
 // Логиним пользователя
@@ -155,4 +168,10 @@ func (r *Router) ErrorHandler() func(c *fiber.Ctx, err error) error {
 		log.Println("Wrong jwts: " + err.Error())
 		return err
 	}
+}
+
+// Пингуем сервер
+func Ping(c *fiber.Ctx) error {
+	log.Println("Ping")
+	return c.JSON("Ping")
 }

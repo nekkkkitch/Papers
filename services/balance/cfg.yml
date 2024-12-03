@@ -1,0 +1,8 @@
+db:
+  host: "db"
+  port: 5432
+  user: "user"
+  password: "123"
+  dbname: "papersdb"
+balance:
+  port: ":50052"

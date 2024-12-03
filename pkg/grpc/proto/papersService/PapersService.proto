@@ -9,6 +9,8 @@ service PapersManagement{
     rpc GetUserPapers(User) returns (AvailablePapers){};
     rpc BuyPaper(Paper) returns (Status){};
     rpc SellPaper(Paper) returns (Status){};
+    rpc Subscribe(Paper) returns (stream Paper);
+    rpc Unsubscribe(Paper) returns (Status);
 }
 
 message User{
@@ -19,7 +21,8 @@ message Request{}
 
 message Paper{
     string name = 1;
-    int32 numberOfPapers = 2;
+    float price = 2;
+    int32 numberOfPapers = 3;
 }
 
 message AvailablePapers{
