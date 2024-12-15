@@ -5,16 +5,18 @@ import (
 	"papers/pkg/jwt"
 	rtr "papers/services/gateway/internal/router"
 	aus "papers/services/gateway/internal/services/authService"
+	balance "papers/services/gateway/internal/services/balanceService"
 	pps "papers/services/gateway/internal/services/ppsService"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
 type Config struct {
-	JWTConfig *jwt.Config `yaml:"jwt" env-prefix:"JWT_"`
-	AUSConfig *aus.Config `yaml:"aus" env-prefix:"AUS_"`
-	PPSConfig *pps.Config `yaml:"pps"`
-	RTRConfig *rtr.Config `yaml:"rtr" env-prefix:"RTR_"`
+	JWTConfig     *jwt.Config     `yaml:"jwt" env-prefix:"JWT_"`
+	AUSConfig     *aus.Config     `yaml:"aus" env-prefix:"AUS_"`
+	PPSConfig     *pps.Config     `yaml:"pps"`
+	RTRConfig     *rtr.Config     `yaml:"rtr" env-prefix:"RTR_"`
+	BalanceConfig *balance.Config `yaml:"balance" env-prefix:"BALANCE_"`
 }
 
 func readConfig(filename string) (*Config, error) {
@@ -45,7 +47,8 @@ func main() {
 		log.Fatalln(err)
 	}
 	log.Println("Auth service connected successfully")
-	router, err := rtr.New(cfg.RTRConfig, authService, ppsService, &jwt)
+	balanceService, err := balance.New(cfg.BalanceConfig)
+	router, err := rtr.New(cfg.RTRConfig, authService, ppsService, balanceService, &jwt)
 	if err != nil {
 		log.Fatalln("Failed to host router:", err.Error())
 	}

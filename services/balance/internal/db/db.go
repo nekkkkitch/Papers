@@ -50,31 +50,11 @@ func (d *DB) GetUserBalance(userID uuid.UUID) (float32, error) {
 	return balance.Float32, nil
 }
 
-func (d *DB) AddBalance(userID uuid.UUID, cash float32) (float32, error) {
-	balance, err := d.GetUserBalance(userID)
+func (d *DB) ChangeBalance(userID uuid.UUID, cash float32) error {
+	_, err := d.db.Exec(context.Background(), `update public.users set balance = balance + $1 where id = $2`, cash, userID)
 	if err != nil {
-		return 0, err
+		log.Println("Cant change user balance")
+		return err
 	}
-	balance += cash
-	_, err = d.db.Exec(context.Background(), `alter table public.users set balance = $1`, balance)
-	if err != nil {
-		return 0, err
-	}
-	return balance, nil
-}
-
-func (d *DB) TakeFromBalance(userID uuid.UUID, cash float32) (float32, error) {
-	balance, err := d.GetUserBalance(userID)
-	if err != nil {
-		return 0, err
-	}
-	balance -= cash
-	if balance < 0 {
-		return 0, fmt.Errorf("trying to withdraw more money than you have")
-	}
-	_, err = d.db.Exec(context.Background(), `alter table public.users set balance = $1`, balance)
-	if err != nil {
-		return 0, err
-	}
-	return balance, nil
+	return nil
 }

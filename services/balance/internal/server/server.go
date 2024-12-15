@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net"
+	problems "papers/pkg/customErrors"
 	pb "papers/pkg/grpc/pb/balanceService"
 
 	"github.com/google/uuid"
@@ -28,8 +29,7 @@ type Service struct {
 
 type IDBManager interface {
 	GetUserBalance(userID uuid.UUID) (float32, error)
-	AddBalance(userID uuid.UUID, cash float32) (float32, error)
-	TakeFromBalance(userID uuid.UUID, cash float32) (float32, error)
+	ChangeBalance(userID uuid.UUID, cash float32) error
 }
 
 // Создание сервера сервиса аутентификации
@@ -53,18 +53,26 @@ func (s *server) GetBalance(_ context.Context, in *pb.User) (*pb.Balance, error)
 	return &pb.Balance{Cash: balance}, nil
 }
 
-func (s *server) AddBalance(_ context.Context, in *pb.Money) (*pb.Balance, error) {
-	balance, err := s.db.AddBalance(uuid.UUID(in.Id), in.Cash)
+func (s *server) AddBalance(_ context.Context, in *pb.Money) (*pb.Status, error) {
+	err := s.db.ChangeBalance(uuid.UUID(in.Id), in.Cash)
 	if err != nil {
 		return nil, err
 	}
-	return &pb.Balance{Cash: balance}, nil
+	return nil, nil
 }
 
-func (s *server) TakeFromBalance(_ context.Context, in *pb.Money) (*pb.Balance, error) {
-	balance, err := s.db.TakeFromBalance(uuid.UUID(in.Id), in.Cash)
+func (s *server) TakeBalance(_ context.Context, in *pb.Money) (*pb.Status, error) {
+	userBalance, err := s.db.GetUserBalance(uuid.UUID(in.Id))
+	if err != nil {
+		log.Println("Cant get user balance:", err)
+		return nil, err
+	}
+	if in.Cash > userBalance {
+		return &pb.Status{Response: problems.LowBalance}, nil
+	}
+	err = s.db.ChangeBalance(uuid.UUID(in.Id), -in.Cash)
 	if err != nil {
 		return nil, err
 	}
-	return &pb.Balance{Cash: balance}, nil
+	return nil, nil
 }

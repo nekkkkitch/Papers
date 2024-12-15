@@ -3,6 +3,7 @@ package router
 import (
 	"crypto/rsa"
 	"encoding/json"
+	"fmt"
 	"log"
 	"papers/pkg/models"
 
@@ -14,11 +15,12 @@ import (
 )
 
 type Router struct {
-	App    *fiber.App
-	Config *Config
-	pps    IPapersService
-	asvc   IAuthService
-	jwt    IJWTManager
+	App     *fiber.App
+	Config  *Config
+	balance IBalanceService
+	pps     IPapersService
+	asvc    IAuthService
+	jwt     IJWTManager
 }
 
 type Config struct {
@@ -32,8 +34,17 @@ type IAuthService interface {
 	UpdateTokens(tokens models.AuthData) (*models.AuthData, error)
 }
 
+type IBalanceService interface {
+	GetBalance(*uuid.UUID) (float32, error)
+	AddBalance(*models.Money) (string, error)
+	TakeBalance(*models.Money) (string, error)
+}
+
 type IPapersService interface {
 	GetAvailablePapers() ([]byte, error)
+	GetUserPapers(userID *uuid.UUID) ([]byte, error)
+	SellPaper(userID *uuid.UUID, paper models.Paper) (string, error)
+	BuyPaper(userID *uuid.UUID, paper models.Paper) (string, error)
 }
 
 type IJWTManager interface {
@@ -45,9 +56,9 @@ type IJWTManager interface {
 }
 
 // Создание рутов для запросов с применением middleware для проверки валидности токенов и началом получения сообщений из брокера
-func New(cfg *Config, auservice IAuthService, pps IPapersService, jwt IJWTManager) (*Router, error) {
+func New(cfg *Config, auservice IAuthService, pps IPapersService, balance IBalanceService, jwt IJWTManager) (*Router, error) {
 	app := fiber.New()
-	router := Router{App: app, Config: cfg, jwt: jwt, asvc: auservice, pps: pps}
+	router := Router{App: app, Config: cfg, jwt: jwt, asvc: auservice, pps: pps, balance: balance}
 	router.App.Use("/ws", func(c *fiber.Ctx) error {
 		if websocket.IsWebSocketUpgrade(c) {
 			err := c.Next()
@@ -73,11 +84,21 @@ func New(cfg *Config, auservice IAuthService, pps IPapersService, jwt IJWTManage
 		Validator:    router.jwt.ValidateToken,
 		ErrorHandler: router.ErrorHandler(),
 	}))
+
+	router.App.Get("/ping", Ping)
+
 	router.App.Post("/login", router.Login())
 	router.App.Post("/register", router.Register())
 	router.App.Get("/refresh", router.UpdateTokens())
-	router.App.Get("/ping", Ping)
+
 	router.App.Get("/papers", router.GetPapers())
+	router.App.Post("/buypaper", router.BuyPaper())
+	router.App.Post("/sellpaper", router.SellPaper())
+	router.App.Get("/mypapers", router.GetUserPapers())
+
+	router.App.Get("/balance", router.GetBalance())
+	router.App.Post("/addbalance", router.AddBalance())
+	router.App.Post("/takebalance", router.TakeBalance())
 	return &router, nil
 }
 
@@ -94,6 +115,162 @@ func (r *Router) GetPapers() fiber.Handler {
 			return err
 		}
 		c.Write(bod)
+		return nil
+	}
+}
+
+func (r *Router) SellPaper() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		access := c.GetReqHeaders()["X-Access-Token"][0]
+		var paper models.Paper
+		err := json.Unmarshal(c.Body(), &paper)
+		if err != nil {
+			log.Println("unmarshal error:", err)
+			c.Status(500)
+			return nil
+		}
+		userID, err := r.jwt.GetIDFromToken(access)
+		if err != nil {
+			log.Println("getting id from token error:", err)
+			c.Status(500)
+			return nil
+		}
+		bod, err := r.pps.SellPaper(userID, paper)
+		if err != nil {
+			log.Println("selling paper error:", err)
+			c.Status(500)
+			return nil
+		}
+		c.Status(200)
+		c.WriteString(bod)
+		return nil
+	}
+}
+
+func (r *Router) BuyPaper() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		access := c.GetReqHeaders()["X-Access-Token"][0]
+		var paper models.Paper
+		err := json.Unmarshal(c.Body(), &paper)
+		if err != nil {
+			log.Println("unmarshal error:", err)
+			c.Status(500)
+			return nil
+		}
+		userID, err := r.jwt.GetIDFromToken(access)
+		if err != nil {
+			log.Println("getting id from token error:", err)
+			c.Status(500)
+			return nil
+		}
+		bod, err := r.pps.BuyPaper(userID, paper)
+		if err != nil {
+			log.Println("buying paper error:", err)
+			c.Status(500)
+			return nil
+		}
+		c.Status(200)
+		c.WriteString(bod)
+		return nil
+	}
+}
+
+func (r *Router) GetUserPapers() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		access := c.GetReqHeaders()["X-Access-Token"][0]
+		userID, err := r.jwt.GetIDFromToken(access)
+		if err != nil {
+			log.Println("getting id from token error:", err)
+			c.Status(500)
+			return nil
+		}
+		bod, err := r.pps.GetUserPapers(userID)
+		if err != nil {
+			log.Println("getting user papers error:", err)
+			c.Status(500)
+			return nil
+		}
+		c.Status(200)
+		c.Write(bod)
+		return nil
+	}
+}
+
+func (r *Router) GetBalance() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		access := c.GetReqHeaders()["X-Access-Token"][0]
+		userID, err := r.jwt.GetIDFromToken(access)
+		if err != nil {
+			log.Println("getting id from token error:", err)
+			c.Status(500)
+			return nil
+		}
+		balance, err := r.balance.GetBalance(userID)
+		if err != nil {
+			log.Println("getting user balance error:", err)
+			c.Status(500)
+			return nil
+		}
+		c.Status(200)
+		c.WriteString(fmt.Sprintf("Your balance is %.2f", balance))
+		return nil
+	}
+}
+
+func (r *Router) AddBalance() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		access := c.GetReqHeaders()["X-Access-Token"][0]
+		money := models.Money{}
+		err := json.Unmarshal(c.Body(), &money)
+		if err != nil {
+			log.Println("unmarshal error:", err)
+			c.Status(500)
+			return nil
+		}
+		userID, err := r.jwt.GetIDFromToken(access)
+		if err != nil {
+			log.Println("getting id from token error:", err)
+			c.Status(500)
+			return nil
+		}
+		money.ID = *userID
+		bod, err := r.balance.AddBalance(&money)
+		if err != nil {
+			log.Println("adding balance error:", err)
+			c.Status(500)
+			return nil
+		}
+		c.Status(200)
+		c.WriteString(bod)
+		return nil
+	}
+}
+
+func (r *Router) TakeBalance() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		access := c.GetReqHeaders()["X-Access-Token"][0]
+		money := models.Money{}
+		err := json.Unmarshal(c.Body(), &money)
+		if err != nil {
+			log.Println("unmarshal error:", err)
+			c.Status(500)
+			return nil
+		}
+		userID, err := r.jwt.GetIDFromToken(access)
+		if err != nil {
+			log.Println("getting id from token error:", err)
+			c.Status(500)
+			return nil
+		}
+		money.ID = *userID
+		bod, err := r.balance.TakeBalance(&money)
+		if err != nil {
+			log.Println("taking from balance error:", err)
+			c.Status(500)
+			return nil
+		}
+		c.Status(200)
+		c.WriteString(bod)
 		return nil
 	}
 }

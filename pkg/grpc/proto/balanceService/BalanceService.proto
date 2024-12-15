@@ -6,8 +6,8 @@ option go_package = "./";
 
 service BalanceManagement{
     rpc GetBalance(User) returns (Balance){};
-    rpc Add(Money) returns (Balance){};
-    rpc Take(Money) returns (Balance){};
+    rpc AddBalance(Money) returns (Status){};
+    rpc TakeBalance(Money) returns (Status){};
 }
 
 message User{
@@ -24,5 +24,5 @@ message Balance{
 }
 
 message Status{
-    string string = 1;
+    string response = 1;
 }

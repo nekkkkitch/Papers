@@ -24,5 +24,4 @@ type AuthData struct {
 type Money struct {
 	ID   uuid.UUID `json:"id"`
 	Cash float32   `json:"cash"`
-	Hash string    `json:"-"`
 }

@@ -29,10 +29,16 @@ create table if not exists public.users(
 );
 
 create table if not exists public.papers(
-    id serial not null primary key,
-    name text not null,
+    name text not null primary key,
     price real not null,
     past_prices real[]
+);
+
+create table if not exists public.storage(
+    id uuid not null references public.users(id),
+    paper_name text not null references public.papers(name),
+    amount int default 0,
+    primary key (id, paper_name)
 );
 
 insert into public.papers(name, price) values('Dogecoin', '100');

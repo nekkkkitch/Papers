@@ -36,7 +36,12 @@ const (
 
 var (
 	needToProvideAuthTokenURLs = []*regexp.Regexp{
-		regexp.MustCompile("^/getchat$"),
+		regexp.MustCompile("^/buypaper$"),
+		regexp.MustCompile("^/sellpaper$"),
+		regexp.MustCompile("^/mypapers$"),
+		regexp.MustCompile("^/getbalance$"),
+		regexp.MustCompile("^/takebalance$"),
+		regexp.MustCompile("^/addbalance$"),
 	}
 	needToProvideRefreshTokenURLs = []*regexp.Regexp{
 		regexp.MustCompile("^/refresh$"),

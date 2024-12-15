@@ -33,9 +33,9 @@ const (
 type PapersManagementClient interface {
 	GetAvailablePapers(ctx context.Context, in *Request, opts ...grpc.CallOption) (*AvailablePapers, error)
 	GetUserPapers(ctx context.Context, in *User, opts ...grpc.CallOption) (*AvailablePapers, error)
-	BuyPaper(ctx context.Context, in *Paper, opts ...grpc.CallOption) (*Status, error)
-	SellPaper(ctx context.Context, in *Paper, opts ...grpc.CallOption) (*Status, error)
-	Subscribe(ctx context.Context, in *Paper, opts ...grpc.CallOption) (grpc.ServerStreamingClient[Paper], error)
+	BuyPaper(ctx context.Context, in *PaperRequest, opts ...grpc.CallOption) (*Status, error)
+	SellPaper(ctx context.Context, in *PaperRequest, opts ...grpc.CallOption) (*Status, error)
+	Subscribe(ctx context.Context, in *PaperRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[Paper], error)
 	Unsubscribe(ctx context.Context, in *Paper, opts ...grpc.CallOption) (*Status, error)
 }
 
@@ -67,7 +67,7 @@ func (c *papersManagementClient) GetUserPapers(ctx context.Context, in *User, op
 	return out, nil
 }
 
-func (c *papersManagementClient) BuyPaper(ctx context.Context, in *Paper, opts ...grpc.CallOption) (*Status, error) {
+func (c *papersManagementClient) BuyPaper(ctx context.Context, in *PaperRequest, opts ...grpc.CallOption) (*Status, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Status)
 	err := c.cc.Invoke(ctx, PapersManagement_BuyPaper_FullMethodName, in, out, cOpts...)
@@ -77,7 +77,7 @@ func (c *papersManagementClient) BuyPaper(ctx context.Context, in *Paper, opts .
 	return out, nil
 }
 
-func (c *papersManagementClient) SellPaper(ctx context.Context, in *Paper, opts ...grpc.CallOption) (*Status, error) {
+func (c *papersManagementClient) SellPaper(ctx context.Context, in *PaperRequest, opts ...grpc.CallOption) (*Status, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Status)
 	err := c.cc.Invoke(ctx, PapersManagement_SellPaper_FullMethodName, in, out, cOpts...)
@@ -87,13 +87,13 @@ func (c *papersManagementClient) SellPaper(ctx context.Context, in *Paper, opts 
 	return out, nil
 }
 
-func (c *papersManagementClient) Subscribe(ctx context.Context, in *Paper, opts ...grpc.CallOption) (grpc.ServerStreamingClient[Paper], error) {
+func (c *papersManagementClient) Subscribe(ctx context.Context, in *PaperRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[Paper], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	stream, err := c.cc.NewStream(ctx, &PapersManagement_ServiceDesc.Streams[0], PapersManagement_Subscribe_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &grpc.GenericClientStream[Paper, Paper]{ClientStream: stream}
+	x := &grpc.GenericClientStream[PaperRequest, Paper]{ClientStream: stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -122,9 +122,9 @@ func (c *papersManagementClient) Unsubscribe(ctx context.Context, in *Paper, opt
 type PapersManagementServer interface {
 	GetAvailablePapers(context.Context, *Request) (*AvailablePapers, error)
 	GetUserPapers(context.Context, *User) (*AvailablePapers, error)
-	BuyPaper(context.Context, *Paper) (*Status, error)
-	SellPaper(context.Context, *Paper) (*Status, error)
-	Subscribe(*Paper, grpc.ServerStreamingServer[Paper]) error
+	BuyPaper(context.Context, *PaperRequest) (*Status, error)
+	SellPaper(context.Context, *PaperRequest) (*Status, error)
+	Subscribe(*PaperRequest, grpc.ServerStreamingServer[Paper]) error
 	Unsubscribe(context.Context, *Paper) (*Status, error)
 	mustEmbedUnimplementedPapersManagementServer()
 }
@@ -142,13 +142,13 @@ func (UnimplementedPapersManagementServer) GetAvailablePapers(context.Context, *
 func (UnimplementedPapersManagementServer) GetUserPapers(context.Context, *User) (*AvailablePapers, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserPapers not implemented")
 }
-func (UnimplementedPapersManagementServer) BuyPaper(context.Context, *Paper) (*Status, error) {
+func (UnimplementedPapersManagementServer) BuyPaper(context.Context, *PaperRequest) (*Status, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BuyPaper not implemented")
 }
-func (UnimplementedPapersManagementServer) SellPaper(context.Context, *Paper) (*Status, error) {
+func (UnimplementedPapersManagementServer) SellPaper(context.Context, *PaperRequest) (*Status, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SellPaper not implemented")
 }
-func (UnimplementedPapersManagementServer) Subscribe(*Paper, grpc.ServerStreamingServer[Paper]) error {
+func (UnimplementedPapersManagementServer) Subscribe(*PaperRequest, grpc.ServerStreamingServer[Paper]) error {
 	return status.Errorf(codes.Unimplemented, "method Subscribe not implemented")
 }
 func (UnimplementedPapersManagementServer) Unsubscribe(context.Context, *Paper) (*Status, error) {
@@ -212,7 +212,7 @@ func _PapersManagement_GetUserPapers_Handler(srv interface{}, ctx context.Contex
 }
 
 func _PapersManagement_BuyPaper_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Paper)
+	in := new(PaperRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -224,13 +224,13 @@ func _PapersManagement_BuyPaper_Handler(srv interface{}, ctx context.Context, de
 		FullMethod: PapersManagement_BuyPaper_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PapersManagementServer).BuyPaper(ctx, req.(*Paper))
+		return srv.(PapersManagementServer).BuyPaper(ctx, req.(*PaperRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _PapersManagement_SellPaper_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Paper)
+	in := new(PaperRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -242,17 +242,17 @@ func _PapersManagement_SellPaper_Handler(srv interface{}, ctx context.Context, d
 		FullMethod: PapersManagement_SellPaper_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PapersManagementServer).SellPaper(ctx, req.(*Paper))
+		return srv.(PapersManagementServer).SellPaper(ctx, req.(*PaperRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _PapersManagement_Subscribe_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(Paper)
+	m := new(PaperRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(PapersManagementServer).Subscribe(m, &grpc.GenericServerStream[Paper, Paper]{ServerStream: stream})
+	return srv.(PapersManagementServer).Subscribe(m, &grpc.GenericServerStream[PaperRequest, Paper]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.

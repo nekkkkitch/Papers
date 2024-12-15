@@ -5,7 +5,7 @@ jwt:
 aus:
   port: ":50051"
   host: "aus"
-blnc:
+balance:
   port: ":50052"
   host: "balance"
 pps:

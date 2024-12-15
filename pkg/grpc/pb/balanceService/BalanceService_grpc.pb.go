@@ -19,9 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	BalanceManagement_GetBalance_FullMethodName = "/BalanceService.BalanceManagement/GetBalance"
-	BalanceManagement_Add_FullMethodName        = "/BalanceService.BalanceManagement/Add"
-	BalanceManagement_Take_FullMethodName       = "/BalanceService.BalanceManagement/Take"
+	BalanceManagement_GetBalance_FullMethodName  = "/BalanceService.BalanceManagement/GetBalance"
+	BalanceManagement_AddBalance_FullMethodName  = "/BalanceService.BalanceManagement/AddBalance"
+	BalanceManagement_TakeBalance_FullMethodName = "/BalanceService.BalanceManagement/TakeBalance"
 )
 
 // BalanceManagementClient is the client API for BalanceManagement service.
@@ -29,8 +29,8 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type BalanceManagementClient interface {
 	GetBalance(ctx context.Context, in *User, opts ...grpc.CallOption) (*Balance, error)
-	Add(ctx context.Context, in *Money, opts ...grpc.CallOption) (*Balance, error)
-	Take(ctx context.Context, in *Money, opts ...grpc.CallOption) (*Balance, error)
+	AddBalance(ctx context.Context, in *Money, opts ...grpc.CallOption) (*Status, error)
+	TakeBalance(ctx context.Context, in *Money, opts ...grpc.CallOption) (*Status, error)
 }
 
 type balanceManagementClient struct {
@@ -51,20 +51,20 @@ func (c *balanceManagementClient) GetBalance(ctx context.Context, in *User, opts
 	return out, nil
 }
 
-func (c *balanceManagementClient) Add(ctx context.Context, in *Money, opts ...grpc.CallOption) (*Balance, error) {
+func (c *balanceManagementClient) AddBalance(ctx context.Context, in *Money, opts ...grpc.CallOption) (*Status, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Balance)
-	err := c.cc.Invoke(ctx, BalanceManagement_Add_FullMethodName, in, out, cOpts...)
+	out := new(Status)
+	err := c.cc.Invoke(ctx, BalanceManagement_AddBalance_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *balanceManagementClient) Take(ctx context.Context, in *Money, opts ...grpc.CallOption) (*Balance, error) {
+func (c *balanceManagementClient) TakeBalance(ctx context.Context, in *Money, opts ...grpc.CallOption) (*Status, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Balance)
-	err := c.cc.Invoke(ctx, BalanceManagement_Take_FullMethodName, in, out, cOpts...)
+	out := new(Status)
+	err := c.cc.Invoke(ctx, BalanceManagement_TakeBalance_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -76,8 +76,8 @@ func (c *balanceManagementClient) Take(ctx context.Context, in *Money, opts ...g
 // for forward compatibility.
 type BalanceManagementServer interface {
 	GetBalance(context.Context, *User) (*Balance, error)
-	Add(context.Context, *Money) (*Balance, error)
-	Take(context.Context, *Money) (*Balance, error)
+	AddBalance(context.Context, *Money) (*Status, error)
+	TakeBalance(context.Context, *Money) (*Status, error)
 	mustEmbedUnimplementedBalanceManagementServer()
 }
 
@@ -91,11 +91,11 @@ type UnimplementedBalanceManagementServer struct{}
 func (UnimplementedBalanceManagementServer) GetBalance(context.Context, *User) (*Balance, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetBalance not implemented")
 }
-func (UnimplementedBalanceManagementServer) Add(context.Context, *Money) (*Balance, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Add not implemented")
+func (UnimplementedBalanceManagementServer) AddBalance(context.Context, *Money) (*Status, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddBalance not implemented")
 }
-func (UnimplementedBalanceManagementServer) Take(context.Context, *Money) (*Balance, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Take not implemented")
+func (UnimplementedBalanceManagementServer) TakeBalance(context.Context, *Money) (*Status, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TakeBalance not implemented")
 }
 func (UnimplementedBalanceManagementServer) mustEmbedUnimplementedBalanceManagementServer() {}
 func (UnimplementedBalanceManagementServer) testEmbeddedByValue()                           {}
@@ -136,38 +136,38 @@ func _BalanceManagement_GetBalance_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
-func _BalanceManagement_Add_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _BalanceManagement_AddBalance_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Money)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(BalanceManagementServer).Add(ctx, in)
+		return srv.(BalanceManagementServer).AddBalance(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: BalanceManagement_Add_FullMethodName,
+		FullMethod: BalanceManagement_AddBalance_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BalanceManagementServer).Add(ctx, req.(*Money))
+		return srv.(BalanceManagementServer).AddBalance(ctx, req.(*Money))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _BalanceManagement_Take_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _BalanceManagement_TakeBalance_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Money)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(BalanceManagementServer).Take(ctx, in)
+		return srv.(BalanceManagementServer).TakeBalance(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: BalanceManagement_Take_FullMethodName,
+		FullMethod: BalanceManagement_TakeBalance_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BalanceManagementServer).Take(ctx, req.(*Money))
+		return srv.(BalanceManagementServer).TakeBalance(ctx, req.(*Money))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -184,12 +184,12 @@ var BalanceManagement_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _BalanceManagement_GetBalance_Handler,
 		},
 		{
-			MethodName: "Add",
-			Handler:    _BalanceManagement_Add_Handler,
+			MethodName: "AddBalance",
+			Handler:    _BalanceManagement_AddBalance_Handler,
 		},
 		{
-			MethodName: "Take",
-			Handler:    _BalanceManagement_Take_Handler,
+			MethodName: "TakeBalance",
+			Handler:    _BalanceManagement_TakeBalance_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
