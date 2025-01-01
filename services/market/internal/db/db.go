@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"papers/pkg/models"
+	"market/internal/pkg/models"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"

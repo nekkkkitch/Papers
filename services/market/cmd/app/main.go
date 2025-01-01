@@ -2,9 +2,9 @@ package main
 
 import (
 	"log"
-	pg "papers/services/market/internal/db"
-	"papers/services/market/internal/redis"
-	"papers/services/market/internal/service"
+	pg "market/internal/db"
+	"market/internal/redis"
+	"market/internal/service"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )

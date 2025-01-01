@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"log"
 	"net"
-	problems "papers/pkg/customErrors"
-	pb "papers/pkg/grpc/pb/papersService"
-	"papers/pkg/models"
+	problems "papers/internal/pkg/customErrors"
+	"papers/internal/pkg/models"
+	pb "papers/internal/pkg/papersService"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc"

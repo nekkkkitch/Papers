@@ -5,8 +5,8 @@ import (
 	"flag"
 	"log"
 
-	papersService "papers/pkg/grpc/pb/papersService"
-	"papers/pkg/models"
+	papersService "gateway/internal/pkg/grpc/pb/papersService"
+	"gateway/internal/pkg/models"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
@@ -31,7 +31,7 @@ func New(cfg *Config) (*Client, error) {
 		return nil, err
 	}
 	c := papersService.NewPapersManagementClient(conn)
-	log.Println("Connecting to aus on " + cfg.Host + cfg.Port)
+	log.Println("Connecting to papers on " + cfg.Host + cfg.Port)
 	return &Client{client: c, conn: conn}, nil
 }
 

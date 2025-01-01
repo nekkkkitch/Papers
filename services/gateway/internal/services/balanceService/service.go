@@ -5,8 +5,8 @@ import (
 	"flag"
 	"log"
 
-	balanceService "papers/pkg/grpc/pb/balanceService"
-	"papers/pkg/models"
+	balanceService "gateway/internal/pkg/grpc/pb/balanceService"
+	"gateway/internal/pkg/models"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc"

@@ -4,14 +4,17 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
+	"gateway/internal/pkg/models"
 	"log"
-	"papers/pkg/models"
 
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/keyauth"
 	"github.com/google/uuid"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type Router struct {
@@ -55,6 +58,18 @@ type IJWTManager interface {
 	RefreshFilter(c *fiber.Ctx) bool
 }
 
+var (
+	AllPapersRequest = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "AllPapers",
+		Help: "Number of times users requiered to see all papers",
+	})
+
+	GeneralAmountOfRequests = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "General",
+		Help: "Number of times users requiered to see all papers",
+	})
+)
+
 // Создание рутов для запросов с применением middleware для проверки валидности токенов и началом получения сообщений из брокера
 func New(cfg *Config, auservice IAuthService, pps IPapersService, balance IBalanceService, jwt IJWTManager) (*Router, error) {
 	app := fiber.New()
@@ -84,6 +99,9 @@ func New(cfg *Config, auservice IAuthService, pps IPapersService, balance IBalan
 		Validator:    router.jwt.ValidateToken,
 		ErrorHandler: router.ErrorHandler(),
 	}))
+	registerMetrics()
+
+	router.App.Get("/metrics", adaptor.HTTPHandler(promhttp.Handler()))
 
 	router.App.Get("/ping", Ping)
 
@@ -102,12 +120,17 @@ func New(cfg *Config, auservice IAuthService, pps IPapersService, balance IBalan
 	return &router, nil
 }
 
-func (r *Router) Listen() {
-	r.App.Listen(r.Config.Host + r.Config.Port)
+func (r *Router) Listen() error {
+	err := r.App.Listen(r.Config.Host + r.Config.Port)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (r *Router) GetPapers() fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		defer AllPapersRequest.Inc()
 		bod, err := r.pps.GetAvailablePapers()
 		if err != nil {
 			log.Println("Failed to get available papers:", err)
@@ -351,4 +374,9 @@ func (r *Router) ErrorHandler() func(c *fiber.Ctx, err error) error {
 func Ping(c *fiber.Ctx) error {
 	log.Println("Ping")
 	return c.JSON("Ping")
+}
+
+func registerMetrics() {
+	prometheus.MustRegister(AllPapersRequest)
+	prometheus.MustRegister(GeneralAmountOfRequests)
 }

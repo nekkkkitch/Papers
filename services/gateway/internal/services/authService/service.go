@@ -7,8 +7,8 @@ import (
 	"flag"
 	"log"
 
-	authService "papers/pkg/grpc/pb/authService"
-	"papers/pkg/models"
+	authService "gateway/internal/pkg/grpc/pb/authService"
+	"gateway/internal/pkg/models"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"

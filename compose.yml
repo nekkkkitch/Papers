@@ -8,6 +8,8 @@ services:
       REDIS_USER_PASSWORD: ""
     ports:
       - "6380:6379"
+    networks:
+      - papersnetwork
     volumes:
       - ./redisdata:/data
   db:
@@ -18,50 +20,11 @@ services:
       POSTGRES_PASSWORD: "123"
     ports:
       - "5434:5432"
+    networks:
+      - papersnetwork
     volumes:
       - ./.database/postgres/data:/var/lib/postgresql/data
       - ./dbInit/dbInit.sql:/docker-entrypoint-initdb.d/init.sql
-  aus:
-    build:
-      dockerfile: services/authservice/Dockerfile
-      context: .
-    ports:
-      - "50051:50051"
-    depends_on:
-      - db
-  balance:
-    build:
-      dockerfile: services/balance/Dockerfile
-      context: .
-    ports:
-      - "50052:50052"
-    depends_on:
-      - db
-  papers:
-    build:
-      dockerfile: services/papers/Dockerfile
-      context: .
-    ports:
-      - "50053:50053"
-    depends_on:
-      - db
-      - redis
-  market:
-    build:
-      dockerfile: services/market/Dockerfile
-      context: .
-    ports:
-      - "50054:50054"
-    depends_on:
-      - db
-      - redis
-  gateway:
-    build:
-      dockerfile: services/gateway/Dockerfile
-      context: .
-    ports:
-      - "8082:8082"
-    depends_on:
-      - aus
-      - balance
-      - papers
+networks:
+  papersnetwork:
+    name: papersnetwork

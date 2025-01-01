@@ -12,5 +12,5 @@ pps:
   port: ":50053"
   host: "papers"
 rtr:
-  router_port: ":8082"
+  router_port: ":8080"
   router_host: ""

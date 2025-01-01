@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"papers/pkg/models"
+	"papers/internal/pkg/models"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"

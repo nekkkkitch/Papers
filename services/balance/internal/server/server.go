@@ -1,11 +1,11 @@
 package server
 
 import (
+	problems "balance/internal/pkg/customErrors"
+	pb "balance/internal/pkg/grpc/pb/balanceService"
 	"context"
 	"log"
 	"net"
-	problems "papers/pkg/customErrors"
-	pb "papers/pkg/grpc/pb/balanceService"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc"

@@ -1,10 +1,12 @@
-FROM nekkkkitch/docker AS builder
+FROM golang:alpine AS builder
 WORKDIR /app
+ADD go.mod .
 COPY . .
-RUN GOOS=linux go build -a -o gateway ./services/gateway/cmd/app/main.go
+RUN GOOS=linux go build -o gateway ./cmd/app/main.go
 
-FROM alpine:latest
+FROM alpine
 WORKDIR /app
-COPY --from=builder /app/gateway .
-COPY ./services/gateway/cfg.yml .
+COPY --from=builder /app/gateway /app/gateway
+COPY cfg.yml .
+EXPOSE 6370
 CMD ["./gateway"]

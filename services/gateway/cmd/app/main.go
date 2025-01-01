@@ -1,12 +1,12 @@
 package main
 
 import (
+	"gateway/internal/pkg/jwt"
+	rtr "gateway/internal/router"
+	aus "gateway/internal/services/authService"
+	balance "gateway/internal/services/balanceService"
+	pps "gateway/internal/services/ppsService"
 	"log"
-	"papers/pkg/jwt"
-	rtr "papers/services/gateway/internal/router"
-	aus "papers/services/gateway/internal/services/authService"
-	balance "papers/services/gateway/internal/services/balanceService"
-	pps "papers/services/gateway/internal/services/ppsService"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
@@ -46,12 +46,18 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	log.Println("Auth service connected successfully")
+	log.Println("Papers service connected successfully")
 	balanceService, err := balance.New(cfg.BalanceConfig)
+	if err != nil {
+		log.Fatalln("Failed to connect to balance service:", err.Error())
+	}
 	router, err := rtr.New(cfg.RTRConfig, authService, ppsService, balanceService, &jwt)
 	if err != nil {
 		log.Fatalln("Failed to host router:", err.Error())
 	}
+	err = router.Listen()
+	if err != nil {
+		log.Fatalln("Failed to host router:", err.Error())
+	}
 	log.Printf("Router is listening on %v:%v\n", router.Config.Host, router.Config.Port)
-	router.Listen()
 }

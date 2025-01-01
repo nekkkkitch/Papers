@@ -1,9 +1,9 @@
 package main
 
 import (
+	pg "balance/internal/db"
+	server "balance/internal/server"
 	"log"
-	pg "papers/services/balance/internal/db"
-	server "papers/services/balance/internal/server"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )

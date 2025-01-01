@@ -2,8 +2,8 @@ package service
 
 import (
 	"log"
+	"market/internal/pkg/models"
 	"math/rand/v2"
-	"papers/pkg/models"
 	"time"
 )
 

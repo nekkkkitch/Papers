@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
-	"papers/pkg/models"
+	"papers/internal/pkg/models"
 	"strconv"
 
 	"github.com/go-redis/redis/v8"

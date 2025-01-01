@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package BalanceService;
+
+option go_package = "./";
+
+service BalanceManagement{
+    rpc GetBalance(User) returns (Balance){};
+    rpc AddBalance(Money) returns (Status){};
+    rpc TakeBalance(Money) returns (Status){};
+}
+
+message User{
+    bytes id = 1;
+}
+
+message Money{
+    bytes id = 1;
+    float cash = 2;
+}
+
+message Balance{
+    float cash = 1;
+}
+
+message Status{
+    string response = 1;
+}

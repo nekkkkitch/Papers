@@ -1,10 +1,12 @@
-FROM nekkkkitch/docker AS builder
+FROM golang:alpine AS builder
 WORKDIR /app
+ADD go.mod .
 COPY . .
-RUN GOOS=linux go build -a -o balance ./services/balance/cmd/app/main.go
+RUN GOOS=linux go build -o balance ./cmd/app/main.go
 
-FROM alpine:latest
+FROM alpine
 WORKDIR /app
-COPY --from=builder /app/balance .
-COPY ./services/balance/cfg.yml .
+COPY --from=builder /app/balance /app/balance
+COPY cfg.yml .
+EXPOSE 50052
 CMD ["./balance"]
